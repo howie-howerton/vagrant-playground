@@ -1,0 +1,37 @@
+$domain = "howielab.local"
+$domain_ip_address = "10.1.2.5"
+$windows_ip_address = "10.1.2.100"
+$ubuntu_ip_address = "10.1.2.200"
+$mac_ip_address = "10.1.2.150"
+$s1_win_msi_agent = "SentinelInstaller_windows_64bit_v4_1_2_45.msi"
+$s1_linux_deb_agent = "SentinelAgent_linux_v4_1_1_3.deb"
+$s1_mac_agent = "SentinelAgent_macos_v4_1_0_3043.pkg"
+$s1_site_token = "eyJ1cmwiOiAiaHR0cHM6Ly91c2VhMS1wdXJwbGUuc2VudGluZWxvbmUubmV0IiwgInNpdGVfa2V5IjogIjZiODA5ZGI0YjQ3YzhkY2YifQ=="
+$N = 2
+
+
+Vagrant.configure("2") do |config|
+
+    config.vm.provider :virtualbox do |v, override|
+        v.linked_clone = true
+        v.cpus = 2
+        v.customize ["modifyvm", :id, "--clipboard-mode", "bidirectional"]
+    end
+
+    (1..$N).each do |i|
+        config.vm.define "win10-#{i}" do |node|
+            node.vm.provider :virtualbox do |v, override|
+                v.memory = 2048
+                v.customize ["modifyvm", :id, "--clipboard-mode", "bidirectional"]
+                v.gui = true
+            end  
+            node.vm.box = "StefanScherer/windows_10"
+            node.vm.network "private_network", ip: "10.1.2.#{i + 100}"
+            node.vm.hostname = "win10-#{i}"
+            node.vm.provision "shell", path: "provision/deploy-s1-win-msi-agent.ps1", args: [$s1_win_msi_agent, $s1_site_token]
+
+        end
+    end
+
+
+end

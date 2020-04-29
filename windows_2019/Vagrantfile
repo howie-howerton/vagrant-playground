@@ -1,0 +1,54 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+$domain = "howielab.local"
+$domain_ip_address = "10.1.2.5"
+
+$s1_win_msi_agent = "SentinelInstaller_windows_64bit_v4_1_2_45.msi"
+$s1_site_token = "eyJ1cmwiOiAiaHR0cHM6Ly91c2VhMS1wdXJwbGUuc2VudGluZWxvbmUubmV0IiwgInNpdGVfa2V5IjogIjZiODA5ZGI0YjQ3YzhkY2YifQ=="
+
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "StefanScherer/windows_2019"
+  config.vm.define "windows-domain-controller"
+  config.vm.hostname = "dc"
+
+  config.winrm.transport = :plaintext
+  config.winrm.basic_auth_only = true
+
+  
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  
+  config.vm.provider "virtualbox" do |vb|
+    # Display the VirtualBox GUI when booting the machine
+    vb.gui = true
+    vb.cpus = 2
+ 
+    # Customize the amount of memory on the VM:
+    vb.memory = "4096"
+  end
+ 
+  config.vm.network "private_network", ip: $domain_ip_address
+
+  config.vm.provision "shell", path: "provision/ps.ps1", args: ["domain-controller.ps1", $domain]
+  config.vm.provision "shell", reboot: true
+  config.vm.provision "shell", path: "provision/ps.ps1", args: "domain-controller-configure.ps1"
+  config.vm.provision "shell", inline: "$env:chocolateyVersion='0.10.15'; iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex", name: "Install Chocolatey"
+  config.vm.provision "shell", path: "provision/ps.ps1", args: "provision-base.ps1"
+  config.vm.provision "shell", reboot: true
+  config.vm.provision "shell", path: "provision/ps.ps1", args: "ad-explorer.ps1"
+  config.vm.provision "shell", path: "provision/ps.ps1", args: "ca.ps1"
+  config.vm.provision "shell", reboot: true
+  config.vm.provision "shell", path: "provision/deploy-s1-win-msi-agent.ps1", args: [$s1_win_msi_agent, $s1_site_token]
+  config.vm.provision "shell", path: "provision/ps.ps1", args: "summary.ps1"
+end
