@@ -13,30 +13,16 @@ swap 'HeyH0Password' to either different pwd or make a variable/parameter
 
 remove or change sonarqube AD group and membership
 
-update test-nodes Vagrantfile to deploy multiple VMs
-
 shorter Vbox names???
 
 install software on win10 VMs with choco:
 - office
 - S1
 - Sysinternals
+- others (https://chocolatey.org/packages)
 
 
-
-
-config.vm.provision "shell", inline: "$env:chocolateyVersion='0.10.15'; iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex", name: "Install Chocolatey"
-config.vm.provision "shell", path: "provision/ps.ps1", args: "provision-base.ps1"
-config.vm.provision "shell", reboot: true
-
-config.vm.provision "shell", path: "provision/locale.ps1"
-config.vm.provision "shell", path: "provision/add-to-domain.ps1", args: [$domain, $domain_ip_address]
-
-
-
-config.vm.provision "shell", path: "provision/add-to-domain.sh", args: [$domain, $domain_ip_address]
-
-
+# Move Certs from Domain Controller script to a location where they can be accessed by the Ubuntu provisioners
     config.trigger.before :up do |trigger|
         trigger.run = {
             inline: '''bash -euc \'

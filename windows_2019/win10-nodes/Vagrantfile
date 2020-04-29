@@ -7,7 +7,7 @@ $s1_win_msi_agent = "SentinelInstaller_windows_64bit_v4_1_2_45.msi"
 $s1_linux_deb_agent = "SentinelAgent_linux_v4_1_1_3.deb"
 $s1_mac_agent = "SentinelAgent_macos_v4_1_0_3043.pkg"
 $s1_site_token = "eyJ1cmwiOiAiaHR0cHM6Ly91c2VhMS1wdXJwbGUuc2VudGluZWxvbmUubmV0IiwgInNpdGVfa2V5IjogIjZiODA5ZGI0YjQ3YzhkY2YifQ=="
-$N = 2
+$N = 1
 
 
 Vagrant.configure("2") do |config|
@@ -28,6 +28,11 @@ Vagrant.configure("2") do |config|
             node.vm.box = "StefanScherer/windows_10"
             node.vm.network "private_network", ip: "10.1.2.#{i + 100}"
             node.vm.hostname = "win10-#{i}"
+            node.vm.provision "shell", inline: "$env:chocolateyVersion='0.10.15'; iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex", name: "Install Chocolatey"
+            node.vm.provision "shell", path: "provision/ps.ps1", args: "provision-base.ps1"
+            node.vm.provision "shell", reboot: true
+            node.vm.provision "shell", path: "provision/locale.ps1"
+            node.vm.provision "shell", path: "provision/add-to-domain.ps1", args: [$domain, $domain_ip_address]
             node.vm.provision "shell", path: "provision/deploy-s1-win-msi-agent.ps1", args: [$s1_win_msi_agent, $s1_site_token]
 
         end
